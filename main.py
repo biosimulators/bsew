@@ -13,6 +13,7 @@ from pbsew.core_construction import construct_core
 class ProgramArguments:
     input_pbif_json: str
     interval: float
+    verbose: bool
 
 def get_program_arguments() -> ProgramArguments:
     parser: argparse.ArgumentParser = argparse.ArgumentParser(
@@ -21,18 +22,19 @@ def get_program_arguments() -> ProgramArguments:
 running Process Bigraph Experiments.''')
     parser.add_argument('input_pbif_json')  # positional argument
     parser.add_argument('-n', '--interval', default=1.0, type=float)
+    parser.add_argument('-v', '--verbose', default=False, type=bool)
     args = parser.parse_args()
     input_file = os.path.abspath(os.path.expanduser(args.input_pbif_json))
     if not os.path.isfile(input_file):
         print("error: `input_file_path` must be a JSON/PBIF file that exists!", file=sys.stderr)
         sys.exit(11)
-    return ProgramArguments(input_file, args.interval)
+    return ProgramArguments(input_file, args.interval, args.verbose)
 
 def main():
     prog_args = get_program_arguments()
     with open(prog_args.input_pbif_json) as input_data:
         schema = json.load(input_data)
-    core = construct_core()
+    core = construct_core(prog_args.verbose)
     prepared_composite = Composite(core=core, config=schema)
     prepared_composite.run(prog_args.interval)
 
