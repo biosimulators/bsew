@@ -37,6 +37,7 @@ RUN python3.12 -m pip install git+https://github.com/biosimulators/bspil-basico.
 ##
 RUN mkdir /runtime
 WORKDIR /runtime
+RUN echo 'test8'
 RUN git clone https://github.com/biosimulators/bsew.git  /runtime
 RUN python3.12 -m pip install -e /runtime
 

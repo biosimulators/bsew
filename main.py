@@ -2,16 +2,18 @@ import argparse
 import os
 import sys
 import json
+import tempfile
+import zipfile
+import shutil
 from dataclasses import dataclass
 
-from PIL.Image import composite
 from process_bigraph import Composite
 
 from pbsew.core_construction import construct_core
 
 @dataclass
 class ProgramArguments:
-    input_pbif_json: str
+    input_file: str
     interval: float
     verbose: bool
 
@@ -20,23 +22,42 @@ def get_program_arguments() -> ProgramArguments:
         prog='BioSimulators Experiment Wrapper (BSew)',
         description='''BSew is a BioSimulators project designed to serve as a template/wrapper for 
 running Process Bigraph Experiments.''')
-    parser.add_argument('input_pbif_json')  # positional argument
+    parser.add_argument('input_file_path')  # positional argument
     parser.add_argument('-n', '--interval', default=1.0, type=float)
     parser.add_argument('-v', '--verbose', default=False, type=bool)
     args = parser.parse_args()
-    input_file = os.path.abspath(os.path.expanduser(args.input_pbif_json))
+    input_file = os.path.abspath(os.path.expanduser(args.input_file_path))
     if not os.path.isfile(input_file):
-        print("error: `input_file_path` must be a JSON/PBIF file that exists!", file=sys.stderr)
+        print("error: `input_file_path` must be a JSON/PBIF file (or an archive containing one) that exists!", file=sys.stderr)
         sys.exit(11)
     return ProgramArguments(input_file, args.interval, args.verbose)
 
 def main():
     prog_args = get_program_arguments()
-    with open(prog_args.input_pbif_json) as input_data:
-        schema = json.load(input_data)
-    core = construct_core(prog_args.verbose)
-    prepared_composite = Composite(core=core, config=schema)
-    prepared_composite.run(prog_args.interval)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        os.chdir(tmpdir)
+        cwd = os.getcwd()
+        input_file: str | None = None
+        if not (prog_args.input_file.endswith('.omex') or prog_args.input_file.endswith('.zip')):
+            input_file = os.path.join(cwd, os.path.basename(prog_args.input_file))
+            shutil.copyfile(prog_args.input_file, input_file)
+        else:
+            with zipfile.ZipFile(prog_args.input_file, "r") as zf:
+                zf.extractall(cwd)
+            for file_name in os.listdir(cwd):
+                if not (file_name.endswith('.pbif') or file_name.endswith('.json')):
+                    continue
+                input_file = os.path.join(cwd, file_name)
+                break
+        if input_file is None:
+            raise FileNotFoundError(f"Could not find any PBIF or JSON file in or at `{prog_args.input_file}`.")
+        with open(input_file) as input_data:
+            schema = json.load(input_data)
+        core = construct_core(prog_args.verbose)
+        prepared_composite = Composite(core=core, config=schema)
+        prepared_composite.run(prog_args.interval)
+        target_output_dir = os.path.join(os.path.dirname(prog_args.input_file), "output")
+        shutil.copytree(cwd, target_output_dir, dirs_exist_ok=True)
 
 if __name__ == "__main__":
     main()
