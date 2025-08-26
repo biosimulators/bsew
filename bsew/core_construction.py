@@ -8,6 +8,7 @@ from process_bigraph import Process, Step, ProcessTypes, Composite
 def construct_core(verbose: bool) -> ProcessTypes:
     core = ProcessTypes()
     counter = 0
+    core.register_process("composite", Composite)
     for name, clazz in load_local_modules(verbose):
         core.register_process(name, clazz)
         if verbose:

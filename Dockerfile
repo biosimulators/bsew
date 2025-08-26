@@ -22,7 +22,6 @@
 #    about.tags="dynamical simulation,systems biology" \
 #    maintainer="BioSimulators Team <info@biosimulators.org>"
 
-#from nixos
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm
 SHELL ["bash", "-c"]
 
@@ -37,8 +36,9 @@ RUN python3.12 -m pip install git+https://github.com/biosimulators/bspil-basico.
 ##
 RUN mkdir /runtime
 WORKDIR /runtime
-RUN echo 'test8'
-RUN git clone https://github.com/biosimulators/bsew.git  /runtime
+# we need the runtime environment
+RUN ls -l
+RUN git clone --depth 1 https://github.com/biosimulators/bsew.git  /runtime
 RUN python3.12 -m pip install -e /runtime
 
 ENTRYPOINT ["python3", "/runtime/main.py"]

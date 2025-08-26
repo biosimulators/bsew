@@ -9,11 +9,12 @@ from dataclasses import dataclass
 
 from process_bigraph import Composite
 
-from pbsew.core_construction import construct_core
+from bsew.core_construction import construct_core
 
 @dataclass
 class ProgramArguments:
     input_file: str
+    output_dir: str
     interval: float
     verbose: bool
 
@@ -23,14 +24,18 @@ def get_program_arguments() -> ProgramArguments:
         description='''BSew is a BioSimulators project designed to serve as a template/wrapper for 
 running Process Bigraph Experiments.''')
     parser.add_argument('input_file_path')  # positional argument
+    parser.add_argument('-o', "--output-directory", type=str)
     parser.add_argument('-n', '--interval', default=1.0, type=float)
-    parser.add_argument('-v', '--verbose', default=False, type=bool)
+    parser.add_argument('-v', '--verbose', action="store_true")
     args = parser.parse_args()
     input_file = os.path.abspath(os.path.expanduser(args.input_file_path))
+    output_dir = os.path.abspath(os.path.expanduser(args.output_directory)) \
+        if args.output_directory is not None else os.path.dirname(input_file)
+
     if not os.path.isfile(input_file):
         print("error: `input_file_path` must be a JSON/PBIF file (or an archive containing one) that exists!", file=sys.stderr)
         sys.exit(11)
-    return ProgramArguments(input_file, args.interval, args.verbose)
+    return ProgramArguments(input_file, output_dir, args.interval, args.verbose)
 
 def main():
     prog_args = get_program_arguments()
@@ -53,11 +58,12 @@ def main():
             raise FileNotFoundError(f"Could not find any PBIF or JSON file in or at `{prog_args.input_file}`.")
         with open(input_file) as input_data:
             schema = json.load(input_data)
+
+
         core = construct_core(prog_args.verbose)
         prepared_composite = Composite(core=core, config=schema)
         prepared_composite.run(prog_args.interval)
-        target_output_dir = os.path.join(os.path.dirname(prog_args.input_file), "output")
-        shutil.copytree(cwd, target_output_dir, dirs_exist_ok=True)
+        shutil.copytree(cwd, prog_args.output_dir, dirs_exist_ok=True)
 
 if __name__ == "__main__":
     main()

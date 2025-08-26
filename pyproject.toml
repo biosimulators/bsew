@@ -1,9 +1,13 @@
 [project]
-name = "pbsew"
+name = "bsew"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+#    "bspil-basico",
     "process-bigraph>=0.0.38",
 ]
+
+#[tool.uv.sources]
+#bspil-basico = { git = "https://github.com/biosimulators/bspil-basico.git", rev = "initial_work" }
