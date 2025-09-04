@@ -42,7 +42,9 @@ def does_package_require_process_bigraph(package: importlib.metadata.Distributio
 
 def recursive_dynamic_import(package_name: str, verbose: bool) -> list[tuple[str, Process | Step ]]:
     classes_to_import = []
-    adjusted_package_name = package_name.replace("-", "_")
+    adjusted_package_name: str = package_name.replace("-", "_")
+    if adjusted_package_name == "vivarium_interface":
+        adjusted_package_name = "vivarium"
     try:
         module = importlib.import_module(adjusted_package_name)
     except ModuleNotFoundError:
@@ -51,7 +53,7 @@ def recursive_dynamic_import(package_name: str, verbose: bool) -> list[tuple[str
         # find top-level.txt
         # find correct module name
         # return recursive_dynamic_import(correct_module_name)
-        raise ModuleNotFoundError(f"module {adjusted_package_name} not found")
+        raise ModuleNotFoundError(f"Error: module `{adjusted_package_name}` not found when trying to dynamically import!")
     class_members = inspect.getmembers(module, inspect.isclass)
     if verbose:
         print(f"Processing {len(class_members)} members...")
