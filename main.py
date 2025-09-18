@@ -5,9 +5,11 @@ import json
 import tempfile
 import zipfile
 import shutil
+import datetime
 from dataclasses import dataclass
 
 from process_bigraph import Composite
+from process_bigraph.emitter import gather_emitter_results
 
 from bsew.core_construction import construct_core
 
@@ -39,7 +41,7 @@ running Process Bigraph Experiments.''')
 
 def main():
     prog_args = get_program_arguments()
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with (tempfile.TemporaryDirectory() as tmpdir):
         os.chdir(tmpdir)
         cwd = os.getcwd()
         input_file: str | None = None
@@ -63,6 +65,16 @@ def main():
         core = construct_core(prog_args.verbose)
         prepared_composite = Composite(core=core, config=schema)
         prepared_composite.run(prog_args.interval)
+        query_results = gather_emitter_results(prepared_composite)
+        if len(query_results) != 0:
+            current_dt = datetime.datetime.now()
+            date, tz, time =    str(current_dt.date()), \
+                                str(current_dt.tzinfo), \
+                                str(current_dt.time()).replace(':', '-')
+            results_filename = f"results_{date}[{tz}#{time}].pber"
+            emitter_results_file_path = os.path.join(prog_args.output_dir, results_filename)
+            with open(emitter_results_file_path, "w+") as emitter_results_file:
+                json.dump(query_results, emitter_results_file)
         shutil.copytree(cwd, prog_args.output_dir, dirs_exist_ok=True)
 
 if __name__ == "__main__":
