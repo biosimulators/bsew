@@ -3,10 +3,10 @@ name = "bsew"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
 #    "bspil-basico",
-    "process-bigraph>=0.0.38",
+    "process-bigraph>=0.0.45",
 ]
 
 #[tool.uv.sources]

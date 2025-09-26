@@ -8,8 +8,9 @@ import shutil
 import datetime
 from dataclasses import dataclass
 
-from process_bigraph import Composite
+from process_bigraph import Composite, ProcessTypes
 from process_bigraph.emitter import gather_emitter_results
+from process_bigraph.package.discover import discover_packages
 
 from bsew.core_construction import construct_core
 
@@ -61,8 +62,7 @@ def main():
         with open(input_file) as input_data:
             schema = json.load(input_data)
 
-
-        core = construct_core(prog_args.verbose)
+        core = discover_packages(core=ProcessTypes(), verbose=prog_args.verbose)
         prepared_composite = Composite(core=core, config=schema)
         prepared_composite.run(prog_args.interval)
         query_results = gather_emitter_results(prepared_composite)
